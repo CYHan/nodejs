@@ -3,6 +3,8 @@
  */
 var http = require('http');
 var employeeService = require('./lib/employees');
+var responder = require('./lib/responseGenerator');
+var staticFile = responder.staticFile('/public');
 
 http.createServer(function (req, res){
 
@@ -12,7 +14,7 @@ http.createServer(function (req, res){
     console.log(req.method + ''+ req.url);
     //res.end('The current time is' + Date.now());
 
-    if(res.method !== 'GET') {
+    if(req.method !== 'GET') {
         res.writeHead(501, {
            'Content-Type': 'text/plain'
         });
@@ -22,25 +24,28 @@ http.createServer(function (req, res){
 
 
     if(_url = /^\/employees$/i.exec(req.url)){
-
+        //직원목록 반환
         //res.writeHead(200);
         //return res.end('employee list');
         employeeService.getEmployees(function(error, data){
             if(error){
-
+                return responder.send500(error,res);
             }
+            return responder.sendJson(data, res);
         });
-    }else if(_url = /^\/employees\/(\d+)$/i.exec(req.url)) {
-
+    }else if(_url = /^\/employees\/(\d+)$/i.exec(req.url)) {     //라우트에 포함된 id 로 직원 검색
         employeeService.getEmployee(_url[1],function(error, data){
             if(error){
-
+                return responder.send500(error,res);
             }
 
             if (!data){
-
+                return responder.send404(res);
             }
+
+            return responder.sendJson(data,res);
         });
+
 
         //res.writeHead(200);
        // return res.end ('a single employee');
